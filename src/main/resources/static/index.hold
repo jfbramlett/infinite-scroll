@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity3">
+  <head>
+    <title>Blog Backup</title>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
+          integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
+          crossorigin="anonymous"/>
+
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"
+            integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
+            crossorigin="anonymous"></script>
+
+    <link rel="stylesheet" src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.6.4/css/bootstrap-datepicker.css"
+          crossorigin="anonymous"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.6.4/js/bootstrap-datepicker.js"
+            crossorigin="anonymous"></script>
+  </head>
+
+  <body>
+    <div class="page-header">
+      <h1>Blog Backup <small>A tool for backing up Blogger Blogs</small></h1>
+    </div>
+
+    <div class="panel panel-primary">
+      <div class="panel-heading">Configured Blogs</div>
+      <div class="panel-body">
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <td>Blog Name</td>
+              <td>Last Downloaded</td>
+              <td></td>
+              <td></td>
+            </tr>
+          </thead>
+          <tbody id="list-data">
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel panel-primary">
+      <div class="panel-heading">Add Blog</div>
+      <div class="panel-body">
+        <p>
+          <label for="newBlogUrl">Blog URL</label>
+          <div class="input-group">
+            <span class="input-group-addon" id="newBlogUrlAddOn">https://blog.name.blogger.com</span>
+            <input id="newBlogUrl" type="text" class="form-control" placeholder="New Blog Url" aria-describedby="newBlogUrlAddOn">
+          </div>
+        </p>
+        <p>
+          <a href="#" class="btn btn-primary btn-lg active" role="button" onclick="addBlog()">Add</a>
+        </p>
+      </div>
+    </div>
+
+    <script>
+        $.fn.datepicker.defaults.format = "mm/dd/yyyy";
+        $.fn.datepicker.defaults.autoclose = true;
+        $.fn.datepicker.defaults.clearBtn = true;
+        $.fn.datepicker.defaults.endDate = '0d';
+
+        $( document ).ready(loadBlogs());
+
+        function loadBlogs() {
+            $.ajax({
+                url: "/blog-export/blogs",
+                type: "get",
+                contentType: "application/json",
+                success: function(data) {
+                    fillBlogs(data);
+                },
+                error: function(xhr, textStatus, errorThrown) {
+                    alert(textStatus + " - " + errorThrown);
+                }
+            });
+        }
+
+        function addBlog() {
+            $.ajax({
+                url: "/blog-export/addBlog?url=" + $("#newBlogUrl").val(),
+                type: "get",
+                success: function(data) {
+                  fillBlogs(data);
+                },
+                error: function(xhr, textStatus, errorThrown) {
+                    alert(textStatus + " - " + errorThrown);
+                },
+            });
+        }
+
+        function updateBlog(blogName, blogId) {
+            $.ajax({
+                url: "/blog-export/blogs/" + blogId,
+                type: "get",
+                contentType: "application/json",
+                success: function(data) {
+                    var lastDownload = data["lastDownload"]
+                    $("#lastDownload-" + blogName).html(lastDownload);
+                },
+                error: function(xhr, textStatus, errorThrown) {
+                    alert(textStatus + " - " + errorThrown);
+                }
+            });
+        }
+
+        function addMessage(msg, msgBox) {
+            $('#' + msgBox).html(msg);
+        }
+
+        function updateProgress(progressBar, progress) {
+            $("#" + progressBar).css("width", "" + progress + "%");
+            $("#" + progressBar).attr("aria-valuenow", "" + progress + "%");
+        }
+
+        function generateBlog(blogName, blogId) {
+            $('#generate-' + blogName).show();
+            $('#generateBtn-' + blogName).addClass('disabled')
+
+            var startDate = $('#' + blogName + "StartDate").datepicker('getDate').toISOString().substring(0, 10);
+            var endDate = $('#' + blogName + "EndDate").datepicker('getDate').toISOString().substring(0, 10);
+
+            if (!!window.EventSource) {
+                var source = new EventSource("/blog-export/generate/" + blogId + "?fromDate=" + startDate + "&toDate=" + endDate);
+                var progress = 0;
+                source.onmessage = function (event) {
+                    progress = progress + 10;
+                    if (progress == 100) {
+                        progress = 0;
+                    }
+                    updateProgress('generate-progress-bar-' + blogName, progress);
+                    addMessage(JSON.parse(event.data).status, 'generateBlogStatus-' + blogName);
+                    listDownloads(blogName, blogId);
+                };
+                source.onopen = function (e) {
+                    addMessage('connection was opened', 'generateBlogStatus-' + blogName);
+                };
+                source.onerror = function (e) {
+                    if (e.readyState == EventSource.CONNECTING) {
+                        addMessage('Starting PDF Generation', 'generateBlogStatus-' + blogName);
+                    } else if (e.readyState == EventSource.OPEN) {
+                        addMessage('Starting PDF Generation', 'generateBlogStatus-' + blogName);
+                    } else if (e.readyState == EventSource.CLOSING) {
+                        addMessage('PDF Complete', 'generateBlogStatus-' + blogName);
+                        updateProgress('generate-progress-bar-' + blogName, '100');
+                        source.close();
+                        $('#generateBtn-' + blogName).removeClass('disabled');
+                        updateBlog(blogName, blogId);
+                        listDownloads(blogName, blogId);
+                    } else if (e.readyState == EventSource.CLOSED) {
+                        addMessage('event: CLOSED', 'generateBlogStatus-' + blogName);
+                    }
+                };
+            } else {
+                addMessage("No window event source", 'generateBlogStatus-' + blogName);
+            }
+
+        }
+
+        function downloadBlog(blogName, blogId) {
+            $('#download-' + blogName).show();
+            $('#downloadBtn-' + blogName).addClass('disabled')
+
+            if (!!window.EventSource) {
+                var source = new EventSource("/blog-export/download/" + blogId);
+                var progress = 0;
+                source.onmessage = function (event) {
+                    progress = progress + 10;
+                    if (progress == 100) {
+                        progress = 0;
+                    }
+                    updateProgress('download-progress-bar-' + blogName, progress);
+                    addMessage(JSON.parse(event.data).status, 'downloadBlogStatus-' + blogName);
+                };
+                source.onopen = function (e) {
+                    addMessage('connection was opened', 'downloadBlogStatus-' + blogName);
+                };
+                source.onerror = function (e) {
+                    if (e.readyState == EventSource.CONNECTING) {
+                        addMessage('Starting Download', 'downloadBlogStatus-' + blogName);
+                    } else if (e.readyState == EventSource.OPEN) {
+                        addMessage('Starting Download', 'downloadBlogStatus-' + blogName);
+                    } else if (e.readyState == EventSource.CLOSING) {
+                        //addMessage('Download Complete', 'downloadBlogStatus-' + blogName);
+                        source.close();
+                        $('#downloadBtn-' + blogName).removeClass('disabled');
+                        updateBlog(blogName, blogId);
+                    } else if (e.readyState == EventSource.CLOSED) {
+                        addMessage('event: CLOSED', 'downloadBlogStatus-' + blogName);
+                    }
+                };
+            } else {
+                addMessage("No window event source", 'downloadBlogStatus-' + blogName);
+            }
+        }
+
+        function closeModal(modelName) {
+            $('#' + modelName).hide();
+        }
+
+        function fillBlogs(data) {
+            $('#list-data').empty();
+            for(var i = 0; i < data.length; i++) {
+                var blogJson = data[i];
+                var blogId = blogJson["id"];
+                var blogName = blogJson["name"];
+                var lastDownload = blogJson["lastDownload"]
+                $('#list-data').append("<tr>" +
+                    "<td>" +
+                    "<div class='btn-group'>" +
+                    "<button type='button' class='btn btn-default dropdown-toggle' data-toggle='dropdown' aria-haspopup='true' aria-expanded='false'>" +
+                    blogName +
+                    "<span class='caret'></span>" +
+                    "</button>" +
+                    "<ul id='downloads-" + blogName + "' class='dropdown-menu'>" +
+                    "</ul>" +
+                    "</div>" +
+                    "</td>" +
+                    "<td id='lastDownload-" + blogName + "'>" + lastDownload + "</td>" +
+                    "<td><a href='#' id='downloadBtn-" + blogName + "' class='btn btn-primary btn-sm active' role='button' onclick='downloadBlog(\"" + blogName + "\", \"" + blogId + "\")'>Download</a></td>" +
+                    "<td>" +
+                    "<div class='btn-group'>" +
+                    "<button type='button' class='btn btn-default dropdown-toggle' data-toggle='dropdown' aria-haspopup='true' aria-expanded='false'>" +
+                    "Create PDF" +
+                    "<span class='caret'></span>" +
+                    "</button>" +
+                    "<ul id='downloads-" + blogName + "' class='dropdown-menu'>" +
+                    "<li>" +
+                    "<div class='panel panel-default'>" +
+                    "<div class='panel-body'>" +
+                    "<div class='form-group'>" +
+                    "<label for='" + blogName + "StartDate'>Start Date</label>" +
+                    "<div class='input-group date' data-provide='datepicker'>" +
+                    "<input type='text' class='form-control' id='" + blogName + "StartDate'>" +
+                    "<div class='input-group-addon'>" +
+                    "<span class='glyphicon glyphicon-th'></span>" +
+                    "</div>" +
+                    "</div>" +
+                    "</div>" +
+                    "<div class='form-group'>" +
+                    "<label for='" + blogName + "EndDate'>End Date</label>" +
+                    "<div class='input-group date' data-provide='datepicker'>" +
+                    "<input type='text' class='form-control' id='" + blogName + "EndDate'>" +
+                    "<div class='input-group-addon'>" +
+                    "<span class='glyphicon glyphicon-th'></span>" +
+                    "</div>" +
+                    "</div>" +
+                    "<div class='form-group'>" +
+                    "<a href='#' id='generateBtn-" + blogName + "' class='btn btn-primary btn-sm active' role='button' onclick='generateBlog(\"" + blogName + "\", \"" + blogId + "\")'>Create PDF</a>" +
+                    "</div>" +
+                    "</div>" +
+                    "</div>" +
+                    "</li>" +
+                    "</ul>" +
+                    "</div>" +
+                    "</td>" +
+                    "</tr>" +
+                    "<tr id='download-" + blogName + "'>" +
+                    "<td colspan='3'>" +
+                      "<div class='panel panel-primary'>" +
+                      "<span class='glyphicon glyphicon-indent-left'>&nbsp;</span>" +
+                      "<a title='Close' onclick='closeModal(\"download-" + blogName + "\")'><i class='glyphicon glyphicon-remove icon-arrow-right pull-right'></i></a>" +
+                      "<div class='panel-heading'>Blog Download</div>" +
+                      "<div class='panel-body'>" +
+                      "<div class='progress'>" +
+                      "<div id='download-progress-bar-" + blogName + "' class='progress-bar' role='progressbar' aria-valuenow='0' aria-valuemin='0' aria-valuemax='100' style='width: 0%;'>" +
+                      "<span class='sr-only'>60% Complete</span>" +
+                      "</div>" +
+                      "</div>" +
+                      "<p id='downloadBlogStatus-" + blogName + "'></p>" +
+                      "<p id='downloadErrors-" + blogName + "'></p>" +
+                      "</div>" +
+                      "</div>" +
+                    "</td>" +
+                    "</tr>" +
+                    "<tr id='generate-" + blogName + "'>" +
+                    "<td colspan='3'>" +
+                    "<div class='panel panel-primary'>" +
+                    "<span class='glyphicon glyphicon-indent-left'>&nbsp;</span>" +
+                    "<a title='Close' onclick='closeModal(\"generate-" + blogName + "\")'><i class='glyphicon glyphicon-remove icon-arrow-right pull-right'></i></a>" +
+                    "<div class='panel-heading'>Generate PDF</div>" +
+                    "<div class='panel-body'>" +
+                    "<div class='progress'>" +
+                    "<div id='generate-progress-bar-" + blogName + "' class='progress-bar' role='progressbar' aria-valuenow='0' aria-valuemin='0' aria-valuemax='100' style='width: 0%;'>" +
+                    "<span class='sr-only'>60% Complete</span>" +
+                    "</div>" +
+                    "</div>" +
+                    "<p id='generateBlogStatus-" + blogName + "'></p>" +
+                    "<p id='generateErrors-" + blogName + "'></p>" +
+                    "</div>" +
+                    "</div>" +
+                    "</td>" +
+                    "</tr>");
+
+
+                $('#download-' + blogName).hide();
+                $('#generate-' + blogName).hide();
+
+                listDownloads(blogName, blogId);
+            }
+
+        }
+
+        function listDownloads(blogName, blogId) {
+            $.ajax({
+                url: "/blog-export/listdownloads/" + blogId,
+                type: "get",
+                contentType: "application/json",
+                success: function(data) {
+                    $('#downloads-' + blogName).empty();
+                    for (var i = 0; i < data.length; i++) {
+                        var downloadItem = data[i];
+                        $("#downloads-" + blogName).append(
+                          "<li><a href='/blog-export/pdf/" + blogId + "?filename=" + downloadItem +  "'>" + downloadItem + "</a></li>"
+                        );
+                    }
+                },
+                error: function(xhr, textStatus, errorThrown) {
+                    alert(textStatus + " - " + errorThrown);
+                }
+            });
+        }
+
+        $(document).on("click", "a.fileDownloadSimpleRichExperience", function () {
+            $.fileDownload($(this).prop('href'), {
+                preparingMessageHtml: "We are preparing your report, please wait...",
+                failMessageHtml: "There was a problem generating your report, please try again."
+            });
+            return false; //this is critical to stop the click event which will trigger a normal file download!
+        });
+
+    </script>
+  </body>
+
+</html>

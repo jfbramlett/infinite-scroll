@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: blog-export
+
+server:
+    port: 8100
+    context-path: /blog-export
+
+logging:
+  level:
+    root: info
+
+security:
+  oauth2:
+    client:
+      clientId: 1043377202443-v4eoljbjb09d3asrit8agfvbqiujff96.apps.googleusercontent.com
+      clientSecret: 3SB2qiyxXmfXLEe9jJKv7Jqm
+      accessTokenUri: https://www.googleapis.com/oauth2/v3/token
+      userAuthorizationUri: https://accounts.google.com/o/oauth2/auth
+      clientAuthenticationScheme: query
+      scope: profile email
+    resource:
+      userInfoUri: https://www.googleapis.com/oauth2/v3/userinfo

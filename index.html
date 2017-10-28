@@ -1,0 +1,87 @@
+Html Webpack Plugin:
+<pre>
+  Error: Child compilation failed:
+  Module build failed: SyntaxError: Unexpected token (1:1)
+  > 1 | <!doctype html>
+      |  ^
+    2 | <html lang="en">
+    3 | <head>
+    4 |   <meta charset="utf-8">
+  :
+  BabelLoaderError: SyntaxError: Unexpected token (1:1)
+  > 1 | <!doctype html>
+      |  ^
+    2 | <html lang="en">
+    3 | <head>
+    4 |   <meta charset="utf-8">
+  
+  - compiler.js:76 
+    [bloggerutils]/[html-webpack-plugin]/lib/compiler.js:76:16
+  
+  - Compiler.js:296 Compiler.<anonymous>
+    [bloggerutils]/[webpack]/lib/Compiler.js:296:10
+  
+  - Compiler.js:499 
+    [bloggerutils]/[webpack]/lib/Compiler.js:499:13
+  
+  - Tapable.js:138 next
+    [bloggerutils]/[tapable]/lib/Tapable.js:138:11
+  
+  - CachePlugin.js:62 Compiler.<anonymous>
+    [bloggerutils]/[webpack]/lib/CachePlugin.js:62:5
+  
+  - Tapable.js:142 Compiler.applyPluginsAsyncSeries
+    [bloggerutils]/[tapable]/lib/Tapable.js:142:13
+  
+  - Compiler.js:496 
+    [bloggerutils]/[webpack]/lib/Compiler.js:496:10
+  
+  - Tapable.js:131 Compilation.applyPluginsAsyncSeries
+    [bloggerutils]/[tapable]/lib/Tapable.js:131:46
+  
+  - Compilation.js:649 self.applyPluginsAsync.err
+    [bloggerutils]/[webpack]/lib/Compilation.js:649:19
+  
+  - Tapable.js:131 Compilation.applyPluginsAsyncSeries
+    [bloggerutils]/[tapable]/lib/Tapable.js:131:46
+  
+  - Compilation.js:640 self.applyPluginsAsync.err
+    [bloggerutils]/[webpack]/lib/Compilation.js:640:11
+  
+  - Tapable.js:131 Compilation.applyPluginsAsyncSeries
+    [bloggerutils]/[tapable]/lib/Tapable.js:131:46
+  
+  - Compilation.js:635 self.applyPluginsAsync.err
+    [bloggerutils]/[webpack]/lib/Compilation.js:635:10
+  
+  - Tapable.js:131 Compilation.applyPluginsAsyncSeries
+    [bloggerutils]/[tapable]/lib/Tapable.js:131:46
+  
+  - Compilation.js:631 sealPart2
+    [bloggerutils]/[webpack]/lib/Compilation.js:631:9
+  
+  - Tapable.js:131 Compilation.applyPluginsAsyncSeries
+    [bloggerutils]/[tapable]/lib/Tapable.js:131:46
+  
+  - Compilation.js:579 Compilation.seal
+    [bloggerutils]/[webpack]/lib/Compilation.js:579:8
+  
+  - Compiler.js:493 
+    [bloggerutils]/[webpack]/lib/Compiler.js:493:16
+  
+  - Tapable.js:225 
+    [bloggerutils]/[tapable]/lib/Tapable.js:225:11
+  
+  - Compilation.js:481 _addModuleChain
+    [bloggerutils]/[webpack]/lib/Compilation.js:481:11
+  
+  - Compilation.js:452 processModuleDependencies.err
+    [bloggerutils]/[webpack]/lib/Compilation.js:452:13
+  
+  - next_tick.js:67 _combinedTickCallback
+    internal/process/next_tick.js:67:7
+  
+  - next_tick.js:98 process._tickCallback
+    internal/process/next_tick.js:98:9
+  
+</pre><script type="text/javascript" src="./src/main/resources/static/built/bundle.js"></script>

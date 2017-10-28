@@ -1,0 +1,50 @@
+{
+  "name": "Blogger Export",
+  "version": "0.0.3",
+  "description": "Blogger Backup and Export Tool",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:jfbramlett/bloggerutils.git"
+  },
+  "author": "John Bramlett",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/jfbramlett/bloggerutils/issues"
+  },
+  "homepage": "https://github.com/jfbramlett/bloggerutils",
+  "dependencies": {
+    "material-ui": "0.18.1",
+    "node-sass": "^4.3.0",
+    "react": "15.4.2",
+    "react-dom": "15.4.2",
+    "sass-loader": "^6.0.2",
+    "whatwg-fetch": "^2.0.3"
+  },
+  "scripts": {
+    "watch": "webpack --watch -d"
+  },
+  "devDependencies": {
+    "babel-core": "^6.23.1",
+    "babel-loader": "^6.3.2",
+    "babel-plugin-transform-class-properties": "^6.22.0",
+    "babel-plugin-transform-decorators-legacy": "^1.3.4",
+    "babel-plugin-transform-runtime": "^6.22.0",
+    "babel-preset-es2015": "6.22.0",
+    "babel-preset-react": "^6.23.0",
+    "babel-runtime": "^6.22.0",
+    "babel-preset-stage-0": "^6.22.0",
+    "css-loader": "0.26.1",
+    "extract-text-webpack-plugin": "^v2.0.0-rc.1",
+    "file-loader": "^0.10.0",
+    "html-webpack-plugin": "^2.26.0",
+    "postcss-loader": "^1.2.2",
+    "style-loader": "0.13.1",
+    "url-loader": "0.5.7",
+    "webpack": "^2.2.1",
+    "webpack-cleanup-plugin": "^0.4.2",
+    "webpack-dashboard": "^0.3.0",
+    "webpack-dev-server": "^2.4.1",
+    "react-tap-event-plugin": "^2.0.1",
+    "react-scripts": "^1.0.10"
+  }
+}
