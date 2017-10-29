@@ -1,8 +1,7 @@
-package org.thirdstreet.blogger;
+package com.bramlettny.infinitescroll;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.security.oauth2.client.EnableOAuth2Sso;
 
 /**
  * Our spring boot main entry point.
