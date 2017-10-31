@@ -1,4 +1,4 @@
-package com.bramlettny.infinitescroll.web.dto;
+package com.bramlettny.infinitescroll.entity;
 
 /**
  * Value object holding a post.

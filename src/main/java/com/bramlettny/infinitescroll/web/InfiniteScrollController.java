@@ -1,6 +1,6 @@
 package com.bramlettny.infinitescroll.web;
 
-import com.bramlettny.infinitescroll.web.dto.Post;
+import com.bramlettny.infinitescroll.entity.Post;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.apache.commons.text.RandomStringGenerator;
 import org.slf4j.Logger;
@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.context.request.async.DeferredResult;
 
@@ -29,8 +30,6 @@ public class InfiniteScrollController {
 
 	private static final String kApplicationJson = "application/json";
 
-	private final RandomStringGenerator randomStringGenerator = new RandomStringGenerator.Builder().build();
-
 	private final Executor executor = Executors.newFixedThreadPool(100,
 			new BasicThreadFactory.Builder()
 				.daemon(true)
@@ -48,15 +47,20 @@ public class InfiniteScrollController {
 
 	@RequestMapping(path = "/feed", method = RequestMethod.GET, produces = kApplicationJson)
 	@ResponseBody
-	public DeferredResult<List<Post>> post() {
+	public DeferredResult<List<Post>> post(@RequestParam(value = "size", required = true) final int size,
+										   @RequestParam(value = "since", required = false) final int seqSince,
+										   @RequestParam(value = "from", required = false) final int seqFrom) {
 		final DeferredResult<List<Post>> deferredResult = new DeferredResult<>();
 
-		executor.execute(() -> post(deferredResult));
+		executor.execute(() -> post(deferredResult, size, seqSince, seqFrom));
 
 		return deferredResult;
 	}
 
-	private void post(final DeferredResult<List<Post>> deferredResult) {
+	private void post(final DeferredResult<List<Post>> deferredResult,
+					  final int size,
+					  final int seqSince,
+					  final int seqFrom) {
 		List<Post> posts = new ArrayList<>(100);
 		for (int i = 0; i < 100; i++) {
 			posts.add(new Post(UUID.randomUUID().toString(), randomStringGenerator.generate(10)));
